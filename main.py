@@ -42,7 +42,7 @@ init(
     app_info=InputAppInfo(
         app_name="licoricepizza",
         api_domain="https://licorice-backend.onrender.com",
-        website_domain="http://localhost:3000",
+        website_domain="https://licorice-frontend.onrender.com",
         api_base_path="/auth",
         website_base_path="/auth"
     ),
@@ -72,6 +72,8 @@ logger = logging.getLogger("indexai")
 # CORS
 origins = [
     "*",
+    "https://licorice-backend.onrender.com",
+    "https://licorice-frontend.onrender.com",
     "http://localhost:3000",
     "http://localhost:8000"]
 
