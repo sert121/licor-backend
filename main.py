@@ -81,8 +81,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET,POST,PUT,DELETE,OPTIONS,HEAD"],
-    allow_headers=["Authorization, Lang, X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept,  X-File-Size, X-File-Name, Cache-Control"] + get_all_cors_headers(),
+    allow_methods=["DELETE, POST, GET, OPTIONS"],
+    allow_headers=["Content-Type, Authorization, X-Requested-With"] + get_all_cors_headers(),
 )
 
 @app.get("/")
