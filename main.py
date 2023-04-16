@@ -41,7 +41,7 @@ headers = {
 init(
     app_info=InputAppInfo(
         app_name="licoricepizza",
-        api_domain="http://localhost:8000",
+        api_domain="https://licorice-backend.onrender.com",
         website_domain="http://localhost:3000",
         api_base_path="/auth",
         website_base_path="/auth"
