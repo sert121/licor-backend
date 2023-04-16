@@ -71,6 +71,7 @@ logger = logging.getLogger("indexai")
 
 # CORS
 origins = [
+    "*",
     "http://localhost:3000",
     "http://localhost:8000"]
 
@@ -82,6 +83,9 @@ app.add_middleware(
     allow_headers=["*"] + get_all_cors_headers(),
 )
 
+@app.get("/")
+def read_r():
+    return {"Hello": "World"}
 
 
 @app.get("/api")
