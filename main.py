@@ -72,16 +72,13 @@ logger = logging.getLogger("indexai")
 origins = [
 
     "https://licorice-frontend.onrender.com",
-        "*",
-    "https://licorice-backend.onrender.com",
-    "http://localhost:3000",
-    "http://localhost:8000"]
+    "https://licorice-backend.onrender.com"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["DELETE, POST, GET, PUT"],
+    allow_methods=["DELETE, POST, GET, PUT, OPTIONS"],
     allow_headers=['X-Custom-Header', 'Content-Type'] + get_all_cors_headers(),
 )
 
