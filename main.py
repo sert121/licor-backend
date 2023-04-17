@@ -3,7 +3,11 @@ from logging_conf import LogConfig
 import logging
 from logging.config import dictConfig
 from fastapi import FastAPI, Request, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
+
+from starlette.middleware.cors import CORSMiddleware
+
+
 import os
 import json
 import requests
@@ -85,15 +89,9 @@ app.add_middleware(
 app.add_middleware(get_middleware())
 
 
-@app.get("/")
-def read_r():
-    return {"Hello": "World"}
-
 
 @app.get("/api")
-def read_root(session: SessionContainer = Depends(verify_session())):
-    user_id = session.get_user_id()
-    print(user_id)
+def read_root():
     return {"Hello": "World"}
 
 
