@@ -30,7 +30,6 @@ from qdrant_client.http import models
 
 
 app = FastAPI()
-app.add_middleware(get_middleware())
 
 headers = {
     'user-agent': "IndexAI/0.0.1",
@@ -71,9 +70,10 @@ logger = logging.getLogger("indexai")
 
 # CORS
 origins = [
-    "*",
-    "https://licorice-backend.onrender.com",
+
     "https://licorice-frontend.onrender.com",
+        "*",
+    "https://licorice-backend.onrender.com",
     "http://localhost:3000",
     "http://localhost:8000"]
 
@@ -84,6 +84,9 @@ app.add_middleware(
     allow_methods=["DELETE, POST, GET, PUT"],
     allow_headers=['X-Custom-Header', 'Content-Type'] + get_all_cors_headers(),
 )
+
+app.add_middleware(get_middleware())
+
 
 @app.get("/")
 def read_r():
