@@ -46,7 +46,8 @@ init(
     app_info=InputAppInfo(
         app_name="licoricepizza",
         api_domain="https://licorice-backend.onrender.com",
-        website_domain="https://licorice-frontend.onrender.com",
+        # website_domain="https://licorice-frontend.onrender.com",
+        website_domain="https://iridescent-llama.netlify.app",
         api_base_path="/auth",
         website_base_path="/auth"
     ),
@@ -75,7 +76,8 @@ logger = logging.getLogger("indexai")
 
 # CORS
 origins = [
-    "https://licorice-frontend.onrender.com",
+    # "https://licorice-frontend.onrender.com",
+    "https://iridescent-llama.netlify.app"
 ]
 
 app.add_middleware(
