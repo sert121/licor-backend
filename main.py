@@ -82,7 +82,7 @@ logger = logging.getLogger("indexai")
 # CORS
 origins = [
     # "https://licorice-frontend.onrender.com",
-    "https://iridescent-llama.netlify.app"
+    "https://iridescent-llama.netlify.app",
 ]
 
 app.add_middleware(
@@ -244,7 +244,7 @@ async def notion_code(body:Code):
     # Concatenate the client  and client secret with a colon
     credentials = f"{client_id}:{client_secret}"
     # Encode the credentials in base64
-    encoded_credentials = base64.b64encode(credentials)
+    encoded_credentials = base64.b64encode(credentials.encode('ascii'))
 
 
     payload = {
