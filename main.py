@@ -2,7 +2,7 @@ from typing import Annotated
 from logging_conf import LogConfig
 import logging
 from logging.config import dictConfig
-from fastapi import FastAPI, Request, UploadFile, File,Code
+from fastapi import FastAPI, Request, UploadFile, File
 # from fastapi.middleware.cors import CORSMiddleware
 import base64
 
@@ -14,7 +14,7 @@ import json
 import requests
 from langchain.document_loaders import PyPDFLoader
 
-from models import QueryVectorStore, CollectionName
+from models import QueryVectorStore, CollectionName,Code
 from helpers import load_data, create_collection_qdrant, get_collection_qdrant, delete_collection_qdrant, query_vector_store_qdrant, create_vec_store_from_text
 from helpers import init_cohere_client, init_qdrant_client, init_cohere_embeddings,add_texts_vector_store
 from fastapi import Form
