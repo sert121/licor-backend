@@ -2,7 +2,16 @@ from pprint import pprint
 import requests
 import os
 from langchain.document_loaders import NotionDBLoader
-from helpers import logger
+
+
+
+from logging.config import dictConfig
+import logging
+from logging_conf import LogConfig
+
+# Logging
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("indexai")
 
 
 # DATABASE_ID = "your_database_id"
@@ -11,7 +20,7 @@ from dotenv import load_dotenv
 load_dotenv()
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 
-def get_subpage_data(page_id):
+def get_subpage_data(page_id, NOTION_API_KEY=NOTION_API_KEY):
     subpage_url = f"https://api.notion.com/v1/blocks/{page_id}/children"
     headers = {
         "Notion-Version": "2021-08-16",
@@ -46,7 +55,7 @@ def fetch_all_subpages_data(DATABASE_ID: str):
         pprint(subpage_data)
 
 
-def fetch_shared_subpages(object_type:str='database'):
+def fetch_shared_subpages(object_type:str='database', NOTION_API_KEY:str=NOTION_API_KEY):
     shared_search = f"https://api.notion.com/v1/search"
     headers = {
         "Notion-Version": "2022-06-28",
@@ -85,7 +94,7 @@ def notion_db_loader_langchain(database_id:str):
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     database_ids = fetch_shared_subpages()
     print('The db id is : ', database_ids[0], '----\n')
     for db_id in database_ids[:1]:

@@ -15,6 +15,9 @@ from qdrant_client.http import models
 import json 
 import openai
 
+from langchain.schema import Document
+
+from notion_api import fetch_shared_subpages, get_subpage_data
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -79,7 +82,6 @@ def create_collection_qdrant(collection_name:str, client_q: QdrantClient):
         vectors_config=models.VectorParams(size=4096,
                                            distance=models.Distance.COSINE),
     )
-    logger.info('done creating collection ---')
 
 def get_collection_qdrant(collection_name:str, client_q: QdrantClient):
     details = client_q.get_collection(collection_name=collection_name)
@@ -87,7 +89,6 @@ def get_collection_qdrant(collection_name:str, client_q: QdrantClient):
 
 def delete_collection_qdrant(collection_name: str, client_q: QdrantClient):
     client_q.delete_collection(collection_name=f"{collection_name}")
-    logger.info(f'done deleting {collection_name}--')
 
 
 def query_vector_store_qdrant(collection_name:str, questions:list, client_q: QdrantClient, cohere_client: cohere.Client):
@@ -111,43 +112,43 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
                                limit=k_max,
                                with_payload=True)
     summarized_responses = {'result':[]}
+
     for i in range(len(response)):
-        logger.info(f"#{i} {response[i].payload['page_content']}")
+        # logger.info(f"#{i} {response[i].payload['page_content']}")
         page_content = response[i].payload['page_content']
         reply = ''
-        try:
-            # summary = cohere_client.summarize(text=page_content)
-            if i == 0:
-                messages = [
-                {"role": "system", "content": "You are a helpful assistant who is excellent at summarizing content of different types. Make sure you retain the most relevant details while summarizing."},
-                {"role": "user", "content": f"Summarize this text for me. Text: {page_content[:700]}"}
-                ]
-                # prompt = '''Generate a summary for the following text.
-                # TEXT: {page_content}
-                # SUMMARY:
-                # '''
+        # try:
+        #     # summary = cohere_client.summarize(text=page_content)
+        #     if i == 0:
+        #         messages = [
+        #         {"role": "system", "content": "You are a helpful assistant who is excellent at summarizing content of different types. Make sure you retain the most relevant details while summarizing."},
+        #         {"role": "user", "content": f"Summarize this text for me. Text: {page_content[:700]}"}
+        #         ]
+        #         # prompt = '''Generate a summary for the following text.
+        #         # TEXT: {page_content}
+        #         # SUMMARY:
+        #         # '''
 
-                response_openai = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo", messages=messages, max_tokens=800)
+        #         response_openai = openai.ChatCompletion.create(
+        #         model="gpt-3.5-turbo", messages=messages, max_tokens=800)
 
-                reply = response_openai['choices'][0]['message']['content']
-            else:
-                # reply is the same as text completion
-                reply = page_content
+        #         reply = response_openai['choices'][0]['message']['content']
+        #     else:
+        #         # reply is the same as text completion
+        #         reply = page_content
 
-            # logger.info(f"summary: {reply}")
+        #     # logger.info(f"summary: {reply}")
 
-            # summarized_responses['result'][i]['summary'] = reply
-            # summarized_responses['result'][i]['page_content'] = page_content
-            # logger.info(f"summary: {reply}")
-            # logger.info(f"summary: {summary}")
-        except Exception as exception:
-            logger.error(exception)
-            logger.info("the exception is:...")
-            logger.info(exception)
+        #     # summarized_responses['result'][i]['summary'] = reply
+        #     # summarized_responses['result'][i]['page_content'] = page_content
+        #     # logger.info(f"summary: {reply}")
+        #     # logger.info(f"summary: {summary}")
+        # except Exception as exception:
+        #     logger.error(exception)
+
             # summary = None
         # d = {'summary':summary.summary,'page_content':page_content} 
-        d = {'summary':reply,'page_content':page_content}
+        d = {'summary':page_content[:100],'page_content':page_content}
         summarized_responses['result'].append(d)
         
     return summarized_responses
@@ -166,13 +167,11 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
     
 
 def create_vec_store_from_text(local_path_pdf:str, collection_name:str,embeddings,use_documents:bool=False, host:str=HOST_URL_QDRANT):
-    logger.info('-- pypdf processing started')
     loader = PyPDFLoader(local_path_pdf)
     pages = loader.load_and_split()
     if use_documents is False:
         pages = [t.page_content for t in pages]
     
-    logger.info('-- pages loaded')
     vec_store = Qdrant.from_texts(pages,
                                   embeddings,
                                   collection_name=collection_name,
@@ -186,13 +185,11 @@ def load_vec_store_langchain(client_q:QdrantClient,host=HOST_URL_QDRANT):
                  embedding_function=embeddings.embed_query,
                  collection_name=collection_name)
   
-  logger.info("store--", store)
   r = store.similarity_search_with_score(query='When was vannevar born')
-  logger.info("Results ----\n", r)
 
 def add_texts_vector_store(client_q,collection_name,local_path_pdf,host=HOST_URL_QDRANT):
   embeddings = init_cohere_embeddings()
-  logger.info('-- pypdf processing started')
+#   logger.info('-- pypdf processing started')
   loader = PyPDFLoader(local_path_pdf)
   pages = loader.load_and_split()
   pages = [t.page_content for t in pages]
@@ -203,6 +200,47 @@ def add_texts_vector_store(client_q,collection_name,local_path_pdf,host=HOST_URL
   r = store.add_texts(texts = pages)
   return r
   
+
+# changes collection name as per user id
+def add_notion_docs(auth_token,collection_name='default_notion'):
+
+    client_q = init_qdrant_client()
+    try:
+        client_q.get_collection(
+        collection_name=f"{collection_name}"
+    )
+    except Exception as exception:
+        client_q.recreate_collection(
+            collection_name=f"{collection_name}",
+            vectors_config=models.VectorParams(size=4096,
+                                            distance=models.Distance.COSINE),
+        )
+
+    try:
+        embeddings = init_cohere_embeddings()
+        store = Qdrant(client=client_q,
+                        embedding_function=embeddings.embed_query,
+                        collection_name=collection_name)
+        
+        list_pages = fetch_shared_subpages(object_type='page',NOTION_API_KEY=auth_token)
+    except Exception  as e:
+        logger.error(e, 'fetching issue')
+    
+    try:
+        for page_object in list_pages:
+            # pg_id = page_object['id']
+            data = get_subpage_data(page_id = page_object,NOTION_API_KEY=auth_token)
+            if data!="":
+            # logger.info("successfully fetched data subpages")
+                store.add_texts(texts = [data], metadatas=[{'type':'notion', 'page_id':page_object}])
+                print('added doc')
+            else:
+                continue
+        logger.info(" completed ingesting notion docs")
+    except Exception as exception:
+        logger.info(exception)
+        print(exception)
+
 
 if __name__ == '__main__':
     pass

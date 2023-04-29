@@ -5,6 +5,7 @@ from logging.config import dictConfig
 from fastapi import FastAPI, Request, UploadFile, File
 # from fastapi.middleware.cors import CORSMiddleware
 import base64
+from helpers import add_notion_docs 
 
 from starlette.middleware.cors import CORSMiddleware
 
@@ -153,6 +154,7 @@ async def add_docs(collection_name: Annotated[str,Form()], uploaded_file: Upload
     
     #check whether a collection exists
 
+
 @app.post("/api/initalize_store")
 async def initialize_vec_store(collection_name: Annotated[str,Form()], uploaded_file: UploadFile = File(...)):
     client_q = init_qdrant_client()
@@ -232,11 +234,18 @@ async def upload_file(uploaded_file: UploadFile = File(...)):
         file_object.write(uploaded_file.file.read())
     return {"filename": uploaded_file.filename}
 
+
+'''
+NOTION RELATED ROUTES
+'''
+
+
 # notion code handler
 @app.post("/api/notion_code")
 async def notion_code(body:Code):
     # define a post request using teh requests library
     # define the url
+    '''
     url = "https://api.notion.com/v1/oauth/token"
 
     client_id = os.getenv("NOTION_CLIENT_ID")
@@ -261,7 +270,12 @@ async def notion_code(body:Code):
     }
 
     response = requests.post(url, data=json.dumps(payload), headers=headers)
+    logger.info(response.json())
+    access_token = response.json()['access_token']
+    '''
+    
+    add_notion_docs(auth_token=body.code)
+    # add_notion_docs(auth_token=access_token)
 
-    print(response.content)
-    return {"content":response.content}
+    return 1
 
