@@ -2,8 +2,9 @@ from typing import Annotated
 from logging_conf import LogConfig
 import logging
 from logging.config import dictConfig
-from fastapi import FastAPI, Request, UploadFile, File
+from fastapi import FastAPI, Request, UploadFile, File,Code
 # from fastapi.middleware.cors import CORSMiddleware
+import base64
 
 from starlette.middleware.cors import CORSMiddleware
 
@@ -31,6 +32,10 @@ from supertokens_python.recipe.session import SessionContainer
 from fastapi import Depends
 
 from qdrant_client.http import models 
+
+from dotenv import load_dotenv
+load_dotenv()
+
 
 
 app = FastAPI()
@@ -218,9 +223,44 @@ async def query_vec_store(body: QueryVectorStore):
 
     # response = query_vector_store_qdrant(collection_name=collection_name, questions=[query], client_q=client_q, cohere_client=cohere_client)
 
+
 @app.post("/api/upload_file")
 async def upload_file(uploaded_file: UploadFile = File(...)):
     file_location = f"./files/{uploaded_file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(uploaded_file.file.read())
     return {"filename": uploaded_file.filename}
+
+# notion code handler
+@app.post("/api/notion_code")
+async def notion_code(body:Code):
+    # define a post request using teh requests library
+    # define the url
+    url = "https://api.notion.com/v1/oauth/token"
+
+    client_id = os.getenv("NOTION_CLIENT_ID")
+    client_secret = os.getenv("NOTION_CLIENT_SECRET")
+
+    # Concatenate the client  and client secret with a colon
+    credentials = f"{client_id}:{client_secret}"
+    # Encode the credentials in base64
+    encoded_credentials = base64.b64encode(credentials)
+
+
+    payload = {
+        "grant_type": "authorization_code",
+        "code": body.code,
+        "redirect_uri": "https://notion-scone.netlify.app"
+    }
+
+    headers = {
+        "Authorization": f"Basic {encoded_credentials}",
+        "Content-Type": "application/json",
+        "User-Agent": "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+    }
+
+    response = requests.post(url, data=json.dumps(payload), headers=headers)
+
+    print(response.content)
+    return {"content":response.content}
+
