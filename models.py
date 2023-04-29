@@ -13,4 +13,5 @@ class QueryVectorStore(BaseModel):
 class CollectionName(BaseModel):
     collection_name:str
 
-
+class Code(BaseModel):
+    code:str
