@@ -245,7 +245,7 @@ async def notion_code(body:Code):
     # Concatenate the client  and client secret with a colon
     credentials = f"{client_id}:{client_secret}"
     # Encode the credentials in base64
-    encoded_credentials = base64.b64encode(credentials.encode('ascii'))
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
 
     payload = {
@@ -255,9 +255,9 @@ async def notion_code(body:Code):
     }
 
     headers = {
-        "Authorization": f"Basic {encoded_credentials}",
+        "Authorization": "Basic %s" % encoded_credentials,
         "Content-Type": "application/json",
-        "User-Agent": "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
     }
 
     response = requests.post(url, data=json.dumps(payload), headers=headers)
