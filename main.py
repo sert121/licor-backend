@@ -260,7 +260,7 @@ async def notion_code(body:Code, session: SessionContainer = Depends(verify_sess
     payload = {
         "grant_type": "authorization_code",
         "code": body.code,
-        "redirect_uri": "https://notion-scone.netlify.app"
+        "redirect_uri": "https://iridescent-llama.netlify.app"
         # "redirect_uri": "https://notion-scone.netlify.app"
     }
 
