@@ -277,6 +277,7 @@ async def notion_code(body:Code, session: SessionContainer = Depends(verify_sess
     
     # add_notion_docs(auth_token=body.code)
     add_notion_docs(auth_token=access_token)
+    logger.info("added docs")
 
     return {"info": "success"}
 
