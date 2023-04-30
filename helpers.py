@@ -189,7 +189,6 @@ def load_vec_store_langchain(client_q:QdrantClient,host=HOST_URL_QDRANT):
 
 def add_texts_vector_store(client_q,collection_name,local_path_pdf,host=HOST_URL_QDRANT):
   embeddings = init_cohere_embeddings()
-#   logger.info('-- pypdf processing started')
   loader = PyPDFLoader(local_path_pdf)
   pages = loader.load_and_split()
   pages = [t.page_content for t in pages]
@@ -227,21 +226,18 @@ def add_notion_docs(auth_token,collection_name='default_notion'):
         logger.error(e, 'fetching issue')
     
     try:
-        for page_object in list_pages:
-            # pg_id = page_object['id']
-            data = get_subpage_data(page_id = page_object,NOTION_API_KEY=auth_token)
+        # print(list_pages)
+        counter = 0
+        for i  in range(len(list_pages[:])):
+            data = get_subpage_data(page_id = list_pages[i],NOTION_API_KEY=auth_token)
             if data!="":
             # logger.info("successfully fetched data subpages")
-                store.add_texts(texts = [data], metadatas=[{'type':'notion', 'page_id':page_object}])
-                print('added doc')
-            else:
-                continue
-        logger.info(" completed ingesting notion docs")
+                store.add_texts(texts = [data], metadatas=[{'type':'notion', 'page_id':list_pages[i]}])
+ 
     except Exception as exception:
-        logger.info(exception)
-        print(exception)
-
-
+        pass
+        # logger.info(exception)
+        # print(exception)
 if __name__ == '__main__':
     pass
 

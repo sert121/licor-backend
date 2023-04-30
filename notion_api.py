@@ -21,20 +21,25 @@ load_dotenv()
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 
 def get_subpage_data(page_id, NOTION_API_KEY=NOTION_API_KEY):
-    subpage_url = f"https://api.notion.com/v1/blocks/{page_id}/children"
-    headers = {
-        "Notion-Version": "2021-08-16",
-        "Authorization": f"Bearer {NOTION_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    response = requests.get(subpage_url, headers=headers)
-    response_data = response.json()
-    if response.status_code != 200:
-        raise Exception(response_data["message"])
-    subpage_data = ""
-    for block in response_data["results"]:
-        if block["type"] == "paragraph":
-            subpage_data += block["paragraph"]["text"][0]["text"]["content"]
+    try:
+        subpage_url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+        headers = {
+            "Notion-Version": "2021-08-16",
+            "Authorization": f"Bearer {NOTION_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        response = requests.get(subpage_url, headers=headers)
+        response_data = response.json()
+        if response.status_code != 200:
+            raise Exception(response_data["message"])
+        subpage_data = ""
+        for block in response_data["results"]:
+            if block["type"] == "paragraph":
+                subpage_data += block["paragraph"]["text"][0]["text"]["content"]
+    except Exception as e:
+        # print("block---",block)
+        # print(e)
+        subpage_data = ""
     return subpage_data
 
 
@@ -91,8 +96,6 @@ def notion_db_loader_langchain(database_id:str):
         print(doc)
     
     return 1
-
-
 
 if __name__ == "__main__":  
     database_ids = fetch_shared_subpages()

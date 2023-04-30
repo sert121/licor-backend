@@ -84,7 +84,7 @@ logger = logging.getLogger("indexai")
 origins = [
     # "https://licorice-frontend.onrender.com",
     "https://iridescent-llama.netlify.app",
-    "https://notion-scone.netlify.app"
+    # "https://notion-scone.netlify.app"
 ]
 
 app.add_middleware(
