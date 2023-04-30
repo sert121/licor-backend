@@ -242,7 +242,7 @@ NOTION RELATED ROUTES
 
 # notion code handler
 @app.post("/api/notion_code")
-async def notion_code(body:Code):
+async def notion_code(body:Code, session: SessionContainer = Depends(verify_session())):
     # define a post request using teh requests library
     # define the url
 
