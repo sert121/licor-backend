@@ -1,2 +1,4 @@
 .vercel
 Spacefile
+.env
+.env*
