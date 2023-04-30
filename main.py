@@ -245,7 +245,7 @@ NOTION RELATED ROUTES
 async def notion_code(body:Code):
     # define a post request using teh requests library
     # define the url
-    '''
+
     url = "https://api.notion.com/v1/oauth/token"
 
     client_id = os.getenv("NOTION_CLIENT_ID")
@@ -261,6 +261,7 @@ async def notion_code(body:Code):
         "grant_type": "authorization_code",
         "code": body.code,
         "redirect_uri": "https://notion-scone.netlify.app"
+        # "redirect_uri": "https://notion-scone.netlify.app"
     }
 
     headers = {
@@ -272,10 +273,10 @@ async def notion_code(body:Code):
     response = requests.post(url, data=json.dumps(payload), headers=headers)
     logger.info(response.json())
     access_token = response.json()['access_token']
-    '''
+    logger.info("access token : ", access_token)
     
-    add_notion_docs(auth_token=body.code)
-    # add_notion_docs(auth_token=access_token)
+    # add_notion_docs(auth_token=body.code)
+    add_notion_docs(auth_token=access_token)
 
-    return 1
+    return {"info": "success"}
 
