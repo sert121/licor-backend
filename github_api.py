@@ -126,27 +126,25 @@ def generate_jwt_token(private_key: AbstractJWKBase, app_id: str) -> str:
         logger.exception("Failed to generate JWT token: %s", str(e))
         raise ValueError("Failed to generate JWT token.")
 
+
+def validate_jwt_token(
+    jwt_token: str, private_key: AbstractJWKBase, app_id: str
+) -> bool:
     """
-    Validate a JWT token signed with the provided private key and the GitHub App ID.
+    Validate a JWT token signed with the provided private key and has the GitHub App ID.
 
     Args:
         jwt_token (str): The JWT token to validate.
-        private_key (RSAPrivateKey): The RSA private key to use for validating the JWT token.
-        app_id (str): The ID of the GitHub App for which the token is being validated.
+        private_key (AbstractJWKBase): The RSA private key used to sign the JWT token.
+        app_id (str): The ID of the GitHub App that issued the JWT token.
 
     Returns:
         bool: True if the JWT token is valid, False otherwise.
 
     Raises:
-        ValueError: If either the jwt_token, private_key, or app_id is not provided or is of invalid type.
-        InvalidTokenError: If there is an issue with the JWT token.
-        JWTDecodeError: If there is an issue decoding the JWT token.
+        ValueError: If the provided JWT token, private key or app ID are invalid.
+        InvalidTokenError: If the provided JWT token is invalid, expired or missing required claims.
     """
-
-
-def validate_jwt_token(
-    jwt_token: str, private_key: AbstractJWKBase, app_id: str
-) -> bool:
     # Validate input
     if not isinstance(jwt_token, str) or len(jwt_token) == 0:
         raise ValueError("Invalid JWT token provided.")
