@@ -3,6 +3,7 @@ import os
 import time
 import traceback
 from base64 import urlsafe_b64encode
+from typing import Dict, Optional
 
 import requests
 from cryptography.exceptions import InvalidSignature
@@ -256,8 +257,61 @@ def validate_jwt_token(
         raise ValueError("Failed to validate JWT token.")
 
 
-def _gh_api_rate_limit_logger(rem, quota):
-    logger.info(f"Quota remaining: {rem} of {quota}")
+def make_request(
+    jwt_token: str,
+    method: str,
+    url: str,
+    request_body: Optional[Dict] = None,
+    headers: Optional[Dict] = None,
+) -> Dict:
+    """
+    Sends a HTTP request with the specified method and URL, and returns the response as a JSON dictionary.
+
+    Args:
+        jwt_token (str): A JWT token string for authenticating the request.
+        method (str): The HTTP method to use for the request (e.g. GET, POST, etc.).
+        url (str): The URL to send the request to.
+        request_body (Optional[Dict]): A dictionary containing the request body data to send (if applicable).
+        headers (Optional[Dict]): A dictionary containing additional headers to send with the request (if applicable).
+
+    Returns:
+        A dictionary containing the JSON response from the server.
+
+    Raises:
+        ValueError: If the request fails for any reason, including HTTP errors or exceptions.
+
+    Examples:
+        >>> jwt_token = "some_jwt_token"
+        >>> method = "GET"
+        >>> url = "https://api.github.com/users/someuser/repos"
+        >>> headers = {"User-Agent": "my-app"}
+        >>> response = make_request(jwt_token, method, url, headers=headers)
+    """
+
+    try:
+        if method not in ["GET", "POST", "PUT", "DELETE"]:
+            raise ValueError(f"Invalid method: {method}")
+
+        response = requests.request(
+            method=method,
+            url=url,
+            # ONLY if headers is not None, spread it and add the Authorization header
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"{jwt_token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+                **(headers if headers is not None else {}),
+            },
+            json=request_body,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP error occurred: {e}")
+        raise ValueError("Request failed.")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request exception occurred: {e}")
+        raise ValueError("Request failed.")
 
 
 if __name__ == "__main__":
@@ -272,9 +326,11 @@ if __name__ == "__main__":
         logger.info("JWT token: %s", jwt_token)
 
     try:
-        # Authenticate with the GitHub API using the JWT token
-        gh_api = GhApi(token=jwt_token)
-        results = gh_api.repos.list_for_user(TARGET_USERNAME, type="public")
+        gh_url = f"https://api.github.com/users/{TARGET_USERNAME}/repos"
+        # Make a request to the GitHub API
+        results = make_request(jwt_token=jwt_token, method="GET", url=gh_url)
+
+        # TODO: remove this
         logger.info(results)
 
     except InvalidPrivateKeyError as e:
