@@ -1,18 +1,12 @@
-import json
 import os
 import time
 import traceback
-from base64 import urlsafe_b64encode
 from typing import Dict, Optional
 
 import requests
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
 from dotenv import load_dotenv
 from jwt import JWT, AbstractJWKBase, jwk_from_pem
-from jwt.exceptions import InvalidKeyTypeError, JWTDecodeError, UnsupportedKeyTypeError
-from requests.exceptions import HTTPError
+from jwt.exceptions import JWTDecodeError
 
 from logging_config import DebugLogger, SecurityLogger
 
@@ -52,128 +46,64 @@ class InvalidTokenError(Exception):
     pass
 
 
-def load_private_key(private_key_path):
+def load_private_key(private_key_path: str) -> AbstractJWKBase:
     """
-    Loads an RSA private key from the provided file path and returns it as a cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey object.
+    Load an RSA private key from a PEM file path.
 
     Args:
-        private_key_path (str): Path to the file containing the private key.
+        private_key_path (str): Path to the PEM file.
 
     Returns:
-        cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey: RSA private key object loaded from the file.
+        An instance of `AbstractJWKBase` representing the private key.
+        Under the hood, it's cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey object.
 
     Raises:
-        InvalidKeyTypeError: If an invalid PEM-encoded RSA private key is provided.
-        UnsupportedKeyTypeError: If a key is provided in an unsupported format.
-        ValueError: If there was a problem loading the private key.
+        InvalidPrivateKeyError: If the private key is invalid or unsupported.
+        ValueError: If the private key cannot be loaded.
     """
     try:
         with open(private_key_path, "rb") as key_file:
             private_key = jwk_from_pem(key_file.read())
-            # private_key = serialization.load_pem_private_key(
-            #     key_file.read(),
-            #     password=None,
-            # )
         return private_key
-    except InvalidKeyTypeError as e:
-        logger.error("Invalid private key provided: %s", str(e))
-        raise InvalidPrivateKeyError("Failed to load private key.")
-    except (UnsupportedKeyTypeError, InvalidSignature) as e:
-        logger.error("Unsupported private key provided: %s", str(e))
-        raise InvalidPrivateKeyError("Failed to load private key.")
     except Exception as e:
-        logger.error("Failed to load private key from %s: %s", private_key_path, str(e))
-        raise ValueError("Failed to load private key.")
-
-
-def sign_request(private_key, request_body):
-    """
-    Signs the given request body using the provided private key and returns the resulting signature as a URL-safe Base64-encoded string.
-
-    Args:
-        private_key (cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey): Private key to use for signing the request.
-        request_body (str): Request body to sign.
-
-    Returns:
-        str: Hex-encoded signature resulting from signing the request body.
-
-    Raises:
-        InvalidSignature: If the resulting signature is invalid.
-        ValueError: If there is an error generating the signature.
-    """
-    try:
-        signature = private_key.sign(
-            request_body.encode("utf-8"),
-            padding.PKCS1v15(),
-            hashes.SHA256(),
+        logger.exception(
+            "Failed to load private key from %s: %s", private_key_path, str(e)
         )
-        signature = urlsafe_b64encode(signature).decode("utf-8").rstrip("=")
-        return signature
-    except (InvalidTokenError, InvalidSignature) as e:
-        logger.error("Failed to sign request: %s", str(e))
-        raise InvalidSignature("Failed to sign request.")
-    except Exception as e:
-        logger.error("Failed to sign request: %s", str(e))
-        raise ValueError("Failed to sign request.")
-
-
-def make_request(jwt_token, url, method, data=None, headers=None):
-    """
-    Sends an HTTP request with the provided private key and returns the response as a JSON object.
-
-    Args:
-        private_key (cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey): Private key to use for signing the request.
-        url (str): URL of the endpoint to make the request to.
-        method (str): HTTP method of the request to send.
-        data (dict): Data to include in the request body.
-        headers (dict): Additional headers to include in the request.
-
-    Returns:
-        dict: JSON response from the API endpoint.
-
-    Raises:
-        HTTPError (requests.exceptions): If there is an error with the HTTP request.
-        ValueError: If the request fails or the response status code is not 200.
-    """
-    headers = headers or {}
-    request_body = "" if not data else json.dumps(data, separators=(",", ":"))
-    try:
-        # signature = sign_request(private_key, request_body)
-        headers["Authorization"] = f"Bearer {jwt_token}"
-        response = requests.request(method, url, json=request_body, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except HTTPError as e:
-        logger.error(f"Failed to make request: {e}")
-        raise ValueError("Request failed.")
-    except Exception as e:
-        logger.error(f"Failed to make request: {e}")
-        raise ValueError("Request failed.")
+        raise InvalidPrivateKeyError("Failed to load private key.") from e
 
 
 def generate_jwt_token(private_key: AbstractJWKBase, app_id: str) -> str:
     """
-    Generate a JWT token signed with the provided private key and the GitHub App ID.
+    Generate a JWT token for GitHub auth using a private key registered with the GitHub App
+      and the App ID.
 
     Args:
         private_key (AbstractJWKBase): The RSA private key to use for signing the JWT token.
-            Underneath, it is cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey (https://github.com/GehirnInc/python-jwt/blob/068db420c9ae957925daf0f5a2baa9319ac20c82/jwt/jwk.py#L346)
-        app_id (str): The ID of the GitHub App for which the token is being generated.
+            Underneath, it is cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+            (https://github.com/GehirnInc/python-jwt/blob/068db420c9ae957925daf0f5a2baa9319ac20c82/jwt/jwk.py#L346)
+        app_id (str): The GitHub App ID for which the token is being generated.
 
     Returns:
-        str: The JWT token as a string.
+        str: The encoded JWT token as a string.
 
     Raises:
-        ValueError: If either the private_key or app_id is not provided or is of invalid type.
-        InvalidTokenError: If there is an issue with the JWT token.
+        ValueError: If the private key or app ID is invalid.
+        InvalidPrivateKeyError: If the private key algorithm is invalid.
+        InvalidTokenError: If signing the payload fails.
     """
     # Validate input
     if not private_key or not isinstance(private_key, AbstractJWKBase):
-        raise ValueError("Invalid private key provided.")
+        raise ValueError("Invalid private key.")
     if not app_id or not isinstance(app_id, str):
-        raise ValueError("Invalid app ID provided.")
+        raise ValueError("Invalid app ID.")
 
     try:
+        # TODO: figure out how to check the private key algorithm
+        #   RSAJWK has the attribute 'alg' but the class is not exposed
+        # Check the private key algorithm
+        # if private_key.alg != "RS256":
+        #     raise InvalidPrivateKeyError("Invalid private key algorithm.")
+
         # Get the current time in Unix time
         now = int(time.time())
 
@@ -187,19 +117,14 @@ def generate_jwt_token(private_key: AbstractJWKBase, app_id: str) -> str:
         # sign the payload with the GitHub App's private key
         encoded_jwt = jwt.encode(payload, private_key, alg="RS256")
 
-        # return encoded_jwt.decode("utf-8")
         return encoded_jwt
     except InvalidTokenError as e:
-        logger.error("Invalid token provided: %s", str(e))
+        logger.exception("Invalid token provided: %s", str(e))
         raise InvalidTokenError("Failed to generate JWT token.")
     except Exception as e:
-        logger.error("Failed to generate JWT token: %s", str(e))
+        logger.exception("Failed to generate JWT token: %s", str(e))
         raise ValueError("Failed to generate JWT token.")
 
-
-def validate_jwt_token(
-    jwt_token: str, private_key: AbstractJWKBase, app_id: str
-) -> bool:
     """
     Validate a JWT token signed with the provided private key and the GitHub App ID.
 
@@ -216,6 +141,11 @@ def validate_jwt_token(
         InvalidTokenError: If there is an issue with the JWT token.
         JWTDecodeError: If there is an issue decoding the JWT token.
     """
+
+
+def validate_jwt_token(
+    jwt_token: str, private_key: AbstractJWKBase, app_id: str
+) -> bool:
     # Validate input
     if not jwt_token or not isinstance(jwt_token, str):
         raise ValueError("Invalid JWT token provided.")
@@ -245,14 +175,14 @@ def validate_jwt_token(
                 str(e),
             )
             return False
-        logger.error(
+        logger.exception(
             "Failed to validate JWT token (InvalidTokenError or JWTDecodeError outside of expected behaviour): %s",
             str(e),
         )
         raise InvalidTokenError("Failed to validate JWT token.")
 
     except Exception as e:
-        logger.error("Failed to validate JWT token: %s", str(e))
+        logger.exception("Failed to validate JWT token: %s", str(e))
         raise ValueError("Failed to validate JWT token.")
 
 
@@ -306,10 +236,10 @@ def make_request(
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
-        logger.error(f"HTTP error occurred: {e}")
+        logger.exception(f"HTTP error occurred: {e}")
         raise ValueError("Request failed.")
     except requests.exceptions.RequestException as e:
-        logger.error(f"Request exception occurred: {e}")
+        logger.exception(f"Request exception occurred: {e}")
         raise ValueError("Request failed.")
 
 
@@ -330,12 +260,12 @@ if __name__ == "__main__":
         results = make_request(jwt_token=jwt_token, method="GET", url=gh_url)
 
         # TODO: remove this
-        logger.info(results)
+        # logger.info(results)
 
     except InvalidPrivateKeyError as e:
-        logger.error("Failed to load private key: %s", str(e))
+        logger.exception("Failed to load private key: %s", str(e))
     except InvalidTokenError as e:
-        logger.error("Failed to generate JWT token: %s", str(e))
+        logger.exception("Failed to generate JWT token: %s", str(e))
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}")
+        logger.exception(f"An unexpected error occurred: {e}")
         traceback.print_exc()
