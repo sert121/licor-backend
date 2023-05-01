@@ -1,0 +1,44 @@
+# EditorConfig helps developers define and maintain consistent coding styles
+# across multiple editors and IDEs.
+
+# top-most EditorConfig file
+root = true
+
+# All files should use UTF-8 encoding
+[*]
+charset = utf-8
+
+# Ignore long lines in Python files
+[*.py]
+max_line_length = 120
+
+# Ignore whitespace errors
+# Ensure trailing whitespace is removed
+# Ensure that the last line in a file ends in a newline
+[*.py]
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Use Google style guide for Python
+# https://google.github.io/styleguide/pyguide.html
+[*.py]
+indent_style = space
+indent_size = 4
+
+# Linting options
+[*.py]
+# flake8 is a popular linter for Python code
+# https://flake8.pycqa.org/
+# Ignore certain errors and warnings
+ignore = E501, W503
+# Enable some plugins
+# flake8-docstrings: checks docstrings for compliance with PEP257
+# flake8-import-order: checks that import statements are sorted correctly
+# flake8-comprehensions: checks that list comprehensions are readable
+plugins = flake8-docstrings, flake8-import-order, flake8-comprehensions
+# Set line length
+max-line-length = 120
+# Set import order style to Google's
+import-order-style = google
+# Set docstring style to Google's
+docstring-convention = google
