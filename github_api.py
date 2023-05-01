@@ -14,7 +14,6 @@ from jwt import JWT, AbstractJWKBase, jwk_from_pem
 from jwt.exceptions import InvalidKeyTypeError, JWTDecodeError, UnsupportedKeyTypeError
 from requests.exceptions import HTTPError
 
-from ghapi.all import GhApi
 from logging_config import DebugLogger, SecurityLogger
 
 load_dotenv()
