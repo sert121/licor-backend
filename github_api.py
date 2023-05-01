@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import time
 from base64 import urlsafe_b64encode
@@ -13,8 +12,9 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from dotenv import load_dotenv
 from github import Github
 from jwt.exceptions import InvalidTokenError
-from logging_config import SecurityLogger, DebugLogger
 from requests.exceptions import HTTPError
+
+from logging_config import DebugLogger, SecurityLogger
 
 load_dotenv()
 
