@@ -1,9 +1,7 @@
 import hmac
-# import json
 import os
 import time
 import traceback
-# from base64 import b64decode, urlsafe_b64decode
 from typing import Dict, Optional
 
 import requests
@@ -158,30 +156,6 @@ def validate_jwt_token(
         raise ValueError("Invalid app ID provided.")
 
     try:
-        # # Decode the JWT token
-        # header, payload, signature = jwt_token.split(".")
-        # decoded_header = json.loads(
-        #     urlsafe_b64decode(header + "=" * (-len(header) % 4)).decode("utf-8")
-        # )
-        # decoded_payload = json.loads(
-        #     urlsafe_b64decode(payload + "=" * (-len(payload) % 4)).decode("utf-8")
-        # )
-        # encoded_signature = urlsafe_b64decode(signature + "=" * (-len(signature) % 4))
-        # # TODO: convert private key to cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
-        # private_key = serialization.load_pem_private_key(
-        #     key_file.read(),
-        #     password=None,
-        # )
-        # # Retrieve the public key from the private key
-        # public_key = private_key.public_key()
-        # # Verify the signature
-        # public_key.verify(
-        #     encoded_signature,
-        #     (decoded_header + '.' + decoded_payload).encode('utf-8'),
-        #     padding.PKCS1v15(),
-        #     hashes.SHA256(),
-        # )
-
         # Decode the JWT token
         decoded_jwt = jwt.decode(jwt_token, private_key, algorithms=["RS256"])
 
