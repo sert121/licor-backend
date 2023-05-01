@@ -1,6 +1,9 @@
+import hmac
+# import json
 import os
 import time
 import traceback
+# from base64 import b64decode, urlsafe_b64decode
 from typing import Dict, Optional
 
 import requests
@@ -147,21 +150,49 @@ def validate_jwt_token(
     jwt_token: str, private_key: AbstractJWKBase, app_id: str
 ) -> bool:
     # Validate input
-    if not jwt_token or not isinstance(jwt_token, str):
+    if not isinstance(jwt_token, str) or len(jwt_token) == 0:
         raise ValueError("Invalid JWT token provided.")
-    if not private_key or not isinstance(private_key, AbstractJWKBase):
+    if not isinstance(private_key, AbstractJWKBase):
         raise ValueError("Invalid private key provided.")
-    if not app_id or not isinstance(app_id, str):
+    if not isinstance(app_id, str) or len(app_id) == 0:
         raise ValueError("Invalid app ID provided.")
 
     try:
+        # # Decode the JWT token
+        # header, payload, signature = jwt_token.split(".")
+        # decoded_header = json.loads(
+        #     urlsafe_b64decode(header + "=" * (-len(header) % 4)).decode("utf-8")
+        # )
+        # decoded_payload = json.loads(
+        #     urlsafe_b64decode(payload + "=" * (-len(payload) % 4)).decode("utf-8")
+        # )
+        # encoded_signature = urlsafe_b64decode(signature + "=" * (-len(signature) % 4))
+        # # TODO: convert private key to cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+        # private_key = serialization.load_pem_private_key(
+        #     key_file.read(),
+        #     password=None,
+        # )
+        # # Retrieve the public key from the private key
+        # public_key = private_key.public_key()
+        # # Verify the signature
+        # public_key.verify(
+        #     encoded_signature,
+        #     (decoded_header + '.' + decoded_payload).encode('utf-8'),
+        #     padding.PKCS1v15(),
+        #     hashes.SHA256(),
+        # )
+
         # Decode the JWT token
         decoded_jwt = jwt.decode(jwt_token, private_key, algorithms=["RS256"])
 
         # Check that the decoded JWT token contains the expected claims
-        if not decoded_jwt["iss"] == app_id:
+        if not hmac.compare_digest(decoded_jwt.get("iss"), app_id):
             raise InvalidTokenError("Invalid token provided.")
-        if not decoded_jwt["iat"] <= int(time.time()) <= decoded_jwt["exp"]:
+        if not decoded_jwt.get("iat") and not isinstance(decoded_jwt.get("iat"), int):
+            raise InvalidTokenError("Invalid token provided.")
+        if not decoded_jwt.get("exp") and not isinstance(decoded_jwt.get("exp"), int):
+            raise InvalidTokenError("Invalid token provided.")
+        if not decoded_jwt.get("iat") <= int(time.time()) <= decoded_jwt.get("exp"):
             raise InvalidTokenError("Invalid token provided.")
 
         return True
@@ -180,10 +211,6 @@ def validate_jwt_token(
             str(e),
         )
         raise InvalidTokenError("Failed to validate JWT token.")
-
-    except Exception as e:
-        logger.exception("Failed to validate JWT token: %s", str(e))
-        raise ValueError("Failed to validate JWT token.")
 
 
 def make_request(
