@@ -42,3 +42,9 @@ max-line-length = 120
 import-order-style = google
 # Set docstring style to Google's
 docstring-convention = google
+# Set list comprehension style to Google's
+inline-quotes = double
+multiline-quotes = double
+# Force multiple imports to be on separate lines wrapped with parentheses
+multiline-output = 3
+force_grid_wrap = false

@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import traceback
 from base64 import urlsafe_b64encode
 
 import requests
@@ -8,11 +9,11 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from dotenv import load_dotenv
-from github import Github
 from jwt import JWT, AbstractJWKBase, jwk_from_pem
 from jwt.exceptions import InvalidKeyTypeError, JWTDecodeError, UnsupportedKeyTypeError
 from requests.exceptions import HTTPError
 
+from ghapi.all import GhApi
 from logging_config import DebugLogger, SecurityLogger
 
 load_dotenv()
@@ -255,6 +256,10 @@ def validate_jwt_token(
         raise ValueError("Failed to validate JWT token.")
 
 
+def _gh_api_rate_limit_logger(rem, quota):
+    logger.info(f"Quota remaining: {rem} of {quota}")
+
+
 if __name__ == "__main__":
     # load the GitHub App's private key from a secure location
     private_key = load_private_key(GH_SKEY_PATH)
@@ -264,36 +269,18 @@ if __name__ == "__main__":
     # Generate a JWT token if one is not provided or if the provided one is invalid
     if not jwt_token or not validate_jwt_token(jwt_token, private_key, app_id):
         jwt_token = generate_jwt_token(private_key, app_id)
-
-    logger.info(jwt_token)
-
-    # Authenticate with the GitHub API using the JWT token
-    g = Github(jwt_token)
-
-    # Search for the target user's public repos
-    user = g.get_user(TARGET_USERNAME)
-    repos = user.get_repos()
+        logger.info("JWT token: %s", jwt_token)
 
     try:
-        # Loop through the repos and extract the .md files
-        for repo in repos:
-            contents = repo.get_contents("")
-            for content_file in contents:
-                if content_file.path.endswith(".md"):
-                    # get the raw file contents
-                    data = make_request(
-                        private_key,
-                        content_file.download_url,
-                        "GET",
-                        headers={"X-GitHub-Api-Version": "2022-11-28"},
-                    )
-                    text = data["content"]
-                    # log the extracted text
-                    logger.info(text)
-                    # Do something with the extracted text
+        # Authenticate with the GitHub API using the JWT token
+        gh_api = GhApi(token=jwt_token)
+        results = gh_api.repos.list_for_user(TARGET_USERNAME, type="public")
+        logger.info(results)
+
     except InvalidPrivateKeyError as e:
         logger.error("Failed to load private key: %s", str(e))
     except InvalidTokenError as e:
         logger.error("Failed to generate JWT token: %s", str(e))
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
+        traceback.print_exc()
