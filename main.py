@@ -209,7 +209,12 @@ async def add_texts_vec_store(collection_name: Annotated[str,Form()], uploaded_f
 
 @app.post("/api/query_vec_store")
 async def query_vec_store(body: QueryVectorStore):
-    collection_name = body.collection_name
+
+    user_id = session.get_user_id()
+    # collection_name_modified = f'{user_id}_notion'
+    collection_name_modified = f'{user_id}_default_collection'
+    collection_name = collection_name_modified
+    
     query = body.query
     client_q = init_qdrant_client()
     cohere_client = init_cohere_client()
@@ -245,8 +250,12 @@ NOTION RELATED ROUTES
 async def notion_code(body:Code, session: SessionContainer = Depends(verify_session())):
     # define a post request using teh requests library
     # define the url
+
+
+    
     user_id = session.get_user_id()
-    collection_name_modified = f'{user_id}_notion'
+    # collection_name_modified = f'{user_id}_notion'
+    collection_name_modified = f'{user_id}_default_collection'
 
     url = "https://api.notion.com/v1/oauth/token"
 
@@ -257,7 +266,6 @@ async def notion_code(body:Code, session: SessionContainer = Depends(verify_sess
     credentials = f"{client_id}:{client_secret}"
     # Encode the credentials in base64
     encoded_credentials = base64.b64encode(credentials.encode()).decode()
-
 
     payload = {
         "grant_type": "authorization_code",
