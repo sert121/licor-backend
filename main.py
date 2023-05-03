@@ -245,6 +245,8 @@ NOTION RELATED ROUTES
 async def notion_code(body:Code, session: SessionContainer = Depends(verify_session())):
     # define a post request using teh requests library
     # define the url
+    user_id = session.get_user_id()
+    collection_name_modified = f'{user_id}_notion'
 
     url = "https://api.notion.com/v1/oauth/token"
 
@@ -277,7 +279,7 @@ async def notion_code(body:Code, session: SessionContainer = Depends(verify_sess
     logger.info("access token : ", access_token)
     
     # add_notion_docs(auth_token=body.code)
-    add_notion_docs(auth_token=access_token)
+    add_notion_docs(auth_token=access_token, collection_name=collection_name_modified)
     logger.info("added docs")
 
     return {"info": "success"}
