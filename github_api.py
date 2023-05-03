@@ -254,12 +254,10 @@ if __name__ == "__main__":
         logger.info("JWT token: %s", jwt_token)
 
     try:
-        gh_url = f"https://api.github.com/users/{TARGET_USERNAME}/repos"
-        # Make a request to the GitHub API
-        results = make_request(jwt_token=jwt_token, method="GET", url=gh_url)
-
-        # TODO: remove this
-        # logger.info(results)
+        url_get_all_repos = f"https://api.github.com/users/{TARGET_USERNAME}/repos"
+        user_pubilc_repos = make_request(
+            jwt_token=jwt_token, method="GET", url=url_get_all_repos
+        )
 
     except InvalidPrivateKeyError as e:
         logger.exception("Failed to load private key: %s", str(e))
