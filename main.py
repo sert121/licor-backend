@@ -208,7 +208,7 @@ async def add_texts_vec_store(collection_name: Annotated[str,Form()], uploaded_f
 
 
 @app.post("/api/query_vec_store")
-async def query_vec_store(body: QueryVectorStore):
+async def query_vec_store(body: QueryVectorStore, session: SessionContainer = Depends(verify_session())):
 
     user_id = session.get_user_id()
     # collection_name_modified = f'{user_id}_notion'
