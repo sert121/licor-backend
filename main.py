@@ -248,9 +248,6 @@ NOTION RELATED ROUTES
 # notion code handler
 @app.post("/api/notion_code")
 async def notion_code(body:Code, session: SessionContainer = Depends(verify_session())):
-    # define a post request using teh requests library
-    # define the url
-
 
     
     user_id = session.get_user_id()
@@ -284,7 +281,6 @@ async def notion_code(body:Code, session: SessionContainer = Depends(verify_sess
     logger.info('response json', response.json())
     response_content = response.content
     access_token = response.json()['access_token']
-    logger.info("access token : ", access_token)
     
     # add_notion_docs(auth_token=body.code)
     add_notion_docs(auth_token=access_token, collection_name=collection_name_modified)
