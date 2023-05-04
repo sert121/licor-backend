@@ -186,7 +186,6 @@ def validate_jwt_token(
 
 
 def make_request(
-    jwt_token: str,
     method: str,
     url: str,
     request_body: Optional[Dict] = None,
@@ -196,7 +195,6 @@ def make_request(
     Sends a HTTP request with the specified method and URL, and returns the response as a JSON dictionary.
 
     Args:
-        jwt_token (str): A JWT token string for authenticating the request.
         method (str): The HTTP method to use for the request (e.g. GET, POST, etc.).
         url (str): The URL to send the request to.
         request_body (Optional[Dict]): A dictionary containing the request body data to send (if applicable).
@@ -226,7 +224,6 @@ def make_request(
             # ONLY if headers is not None, spread it and add the Authorization header
             headers={
                 "Accept": "application/vnd.github+json",
-                "Authorization": f"{jwt_token}",
                 "X-GitHub-Api-Version": "2022-11-28",
                 **(headers if headers is not None else {}),
             },
@@ -256,7 +253,9 @@ if __name__ == "__main__":
     try:
         url_get_all_repos = f"https://api.github.com/users/{TARGET_USERNAME}/repos"
         user_pubilc_repos = make_request(
-            jwt_token=jwt_token, method="GET", url=url_get_all_repos
+            method="GET",
+            url=url_get_all_repos,
+            headers={"Authorization": f"{jwt_token}"},
         )
 
     except InvalidPrivateKeyError as e:
