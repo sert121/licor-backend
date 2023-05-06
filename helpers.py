@@ -221,7 +221,7 @@ def add_notion_docs(auth_token,collection_name='default_notion'):
                         embedding_function=embeddings.embed_query,
                         collection_name=collection_name)
         
-        list_pages = fetch_shared_subpages(object_type='page',NOTION_API_KEY=auth_token)
+        list_pages, page_urls = fetch_shared_subpages(object_type='page',NOTION_API_KEY=auth_token)
     except Exception  as e:
         logger.error(e, 'fetching issue')
     
@@ -232,12 +232,11 @@ def add_notion_docs(auth_token,collection_name='default_notion'):
             data = get_subpage_data(page_id = list_pages[i],NOTION_API_KEY=auth_token)
             if data!="":
             # logger.info("successfully fetched data subpages")
-                store.add_texts(texts = [data], metadatas=[{'type':'notion', 'page_id':list_pages[i]}])
+                store.add_texts(texts = [data], metadatas=[{'type':'notion','url':page_urls[i], 'page_id':list_pages[i]}])
  
     except Exception as exception:
-        pass
         # logger.info(exception)
-        # print(exception)
+        print(exception)
 if __name__ == '__main__':
     pass
 

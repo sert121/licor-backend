@@ -81,13 +81,14 @@ def fetch_shared_subpages(object_type:str='database', NOTION_API_KEY:str=NOTION_
 
     response = requests.post(shared_search, headers=headers, json=data)
     data_response = response.json()
-    database_ids = []
+    database_ids,database_urls = [],[]
     try:
         for result in data_response["results"]:
             database_ids.append(result["id"])
+            database_urls.append(result["url"])
     except KeyError:
         logger.info(f"Key Error, id {result['id']} not found")
-    return database_ids
+    return database_ids, database_urls
 
 def notion_db_loader_langchain(database_id:str):
     loader = NotionDBLoader(NOTION_API_KEY, database_id)
