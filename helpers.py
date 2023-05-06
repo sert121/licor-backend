@@ -118,8 +118,10 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
         page_content = response[i].payload['page_content']
         try: 
             url = response[i].payload['metadata']['url']
+            content_type = response[i].payload['metadata']['type']
         except:
             url = ''
+            content_type = ''
         # try:
         #     # summary = cohere_client.summarize(text=page_content)
         #     if i == 0:
@@ -151,7 +153,7 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
 
             # summary = None
         # d = {'summary':summary.summary,'page_content':page_content} 
-        d = {'summary':page_content[:100],'url':url,'page_content':page_content}
+        d = {'summary':page_content[:100],'type':content_type,'url':url,'page_content':page_content}
         summarized_responses['result'].append(d)
         
     return summarized_responses
