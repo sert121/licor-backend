@@ -4,6 +4,9 @@ import os
 from langchain.document_loaders import NotionDBLoader
 
 
+import json
+from pytion import Notion
+from pytion.models import Page
 
 from logging.config import dictConfig
 import logging
@@ -74,7 +77,7 @@ def fetch_shared_subpages(object_type:str='database', NOTION_API_KEY:str=NOTION_
             "property": "object"
         },
         "sort": {
-            "direction": "ascending",
+            "direction": "descending",
             "timestamp": "last_edited_time"
         }
     }
@@ -97,6 +100,37 @@ def notion_db_loader_langchain(database_id:str):
         print(doc)
     
     return 1
+
+'''pytion module
+'''
+def pytion_retrieve(token, limit=30):
+    """ This function retrieves the list of pages shared with the extension
+    and returns the id, url and text associated with each page.
+    The metadata for each page is returned as a list.
+
+    Args:
+        token : auth token, acquired after successful login
+        limit (int, optional): number of pages to retrieve. Defaults to 30.
+
+    Returns:
+        page_ids: list of page ids
+        page_urls: list of page urls
+        page_texts: list of page texts
+    """
+    no = Notion(token="secret_iti3x9uc9MtpolyGcRg8Sypi3I4TpnPTZV5Dl5Oropq")
+    pages = no.search("", object_type="page")
+    page_ids, page_urls, page_texts = [], [], []
+    for page in pages.obj[:limit]:
+        if isinstance(page, Page) == True:
+            page_id, page_url = page.id, page.url
+            page_element = no.pages.get(page_id)
+            blocks = page_element.get_block_children_recursive()
+            page_content = blocks.obj.simple
+            page_ids.append(page_id)
+            page_urls.append(page_url)
+            page_texts.append(page_content)
+
+    return page_ids, page_urls, page_texts
 
 if __name__ == "__main__":  
     database_ids = fetch_shared_subpages()
