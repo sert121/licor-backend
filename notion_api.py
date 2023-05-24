@@ -122,10 +122,18 @@ def pytion_retrieve(token, limit=30):
     page_ids, page_urls, page_texts = [], [], []
     for page in pages.obj[:limit]:
         if isinstance(page, Page) == True:
-            page_id, page_url = page.id, page.url
+            try:
+                page_id = page.id
+            except :
+                page_id = "42"
+            try: 
+                page_url = page.url
+            except:
+                page_url = "openai.com"
             page_element = no.pages.get(page_id)
             blocks = page_element.get_block_children_recursive()
             page_content = blocks.obj.simple
+            
             page_ids.append(page_id)
             page_urls.append(page_url)
             page_texts.append(page_content)
