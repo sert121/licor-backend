@@ -193,7 +193,8 @@ def add_notion_docs(auth_token,collection_name):
         page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=50)
         counter = 0
         for i in range(len(page_texts)):
-            store.add_texts(texts = page_texts[i], metadatas=[{'type':'notion','url':page_urls[i]}])
+            print(page_texts[i])
+            # store.add_texts(texts = page_texts[i], metadatas=[{'type':'notion','url':page_urls[i]}]) # uncomment this
             counter+=1
 
         # list_pages, page_urls = fetch_shared_subpages(object_type='page',NOTION_API_KEY=auth_token)
