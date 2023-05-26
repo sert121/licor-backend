@@ -93,7 +93,7 @@ def delete_collection_qdrant(collection_name: str, client_q: QdrantClient):
     client_q.delete_collection(collection_name=f"{collection_name}")
 
 
-def query_vector_store_qdrant(collection_name:str, questions:list, client_q: QdrantClient, cohere_client: cohere.Client):
+def query_vector_store_q_cohere(collection_name:str, questions:list, client_q: QdrantClient, cohere_client: cohere.Client):
 
     try:
         details = get_collection_qdrant(collection_name=collection_name,client_q=client_q)
@@ -105,6 +105,7 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
     embedded_vectors = cohere_client.embed(model="large",
                                            texts=questions).embeddings
     # Conversion to float is required for Qdrant
+    
     vectors = [list(map(float, vector)) for vector in embedded_vectors]
     k_max = 15
 
@@ -113,7 +114,8 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
                                limit=k_max,
                                with_payload=True)
     summarized_responses = {'result':[]}
-
+    
+    
     for i in range(len(response)):
         # logger.info(f"#{i} {response[i].payload['page_content']}")
         page_content = response[i].payload['page_content']
@@ -130,6 +132,30 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
     return summarized_responses
     
     
+
+def query_vector_store_qdrant(collection_name:str, questions:list, client_q: QdrantClient):
+    try:
+        open_emb = OpenAIEmbeddings()
+        store  = Qdrant(client=client_q,
+        embedding_function=open_emb.embed_query,
+        collection_name=collection_name)
+
+        results = store.similarity_search_with_score(query=questions[0]) # List of Documents
+        summarized_responses = {'result':[]}
+        for i in range(len(results)):
+            page_content = results[i][0].page_content
+            metadata = results[i][0].metadata
+            url = metadata['url']
+            content_type = metadata['type']
+
+            d = {'summary':page_content[:100],'type':content_type,'url':url,'page_content':page_content}
+            summarized_responses['result'].append(d)
+        return summarized_responses
+    
+    except:
+        logger.error('collection does not exist, try creating collection by querying the initialize endpoint')
+        return None
+
 
 def create_vec_store_from_text(local_path_pdf:str, collection_name:str,embeddings,use_documents:bool=False, host:str=HOST_URL_QDRANT):
     loader = PyPDFLoader(local_path_pdf)
@@ -177,7 +203,8 @@ def add_notion_docs(auth_token,collection_name):
     try:
         client_q.recreate_collection(
             collection_name=f"{collection_name}",
-            vectors_config=models.VectorParams(size=4096,
+            vectors_config=models.VectorParams(size=1536,
+                                            #    size=4096
                                             distance=models.Distance.COSINE),
         )
     except Exception as e:
@@ -185,17 +212,15 @@ def add_notion_docs(auth_token,collection_name):
 
 
     try:
-        embeddings = init_cohere_embeddings()
+        embeddings = OpenAIEmbeddings()
         store = Qdrant(client=client_q,
                         embedding_function=embeddings.embed_query,
                         collection_name=collection_name)
         
         page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=50)
-        counter = 0
-        for i in range(len(page_texts)):
-            print(page_urls[i])
-            # store.add_texts(texts = page_texts[i], metadatas=[{'type':'notion','url':page_urls[i]}]) # uncomment this
-            counter+=1
+        metadata = [{'type':'notion','url':page_urls[i], 'page_id':page_ids[i]} for i in range(len(page_urls))]
+        store.add_texts(texts = page_texts, metadatas=metadata)
+
 
         # list_pages, page_urls = fetch_shared_subpages(object_type='page',NOTION_API_KEY=auth_token)
     except Exception  as e:

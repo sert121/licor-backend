@@ -221,7 +221,7 @@ async def query_vec_store(body: QueryVectorStore, session: SessionContainer = De
     try:
         # query vector store
         response = query_vector_store_qdrant(collection_name=collection_name, questions=[
-                                             query], client_q=client_q, cohere_client=cohere_client)
+                                             query], client_q=client_q)
         if response is None:
             return {"info": "Collection is incorrect/does not exist"}
         return response
