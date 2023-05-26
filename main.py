@@ -283,7 +283,7 @@ async def notion_code(body:Code, session: SessionContainer = Depends(verify_sess
     access_token = response.json()['access_token']
     
     # add_notion_docs(auth_token=body.code)
-    await add_notion_docs(auth_token=access_token, collection_name=collection_name_modified)
+    add_notion_docs(auth_token=access_token, collection_name=collection_name_modified)
     logger.info("added docs")
 
     return {"info": "success"}
