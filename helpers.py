@@ -148,7 +148,7 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
             url = metadata['url']
             content_type = metadata['type']
 
-            d = {'summary':page_content[:100],'type':content_type,'url':url,'page_content':page_content}
+            d = {'summary':page_content[:500],'type':content_type,'url':url,'page_content':page_content}
             summarized_responses['result'].append(d)
         return summarized_responses
     
@@ -215,7 +215,7 @@ def add_notion_docs(auth_token,collection_name):
                         embedding_function=embeddings.embed_query,
                         collection_name=collection_name)
         
-        page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=5)
+        page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=10)
         metadata = [{'type':'notion','url':page_urls[i], 'page_id':page_ids[i]} for i in range(len(page_urls))]
         if len(page_texts)==0:
             logger.error('no page texts found')
