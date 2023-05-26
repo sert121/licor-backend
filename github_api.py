@@ -1,3 +1,4 @@
+import base64
 import hmac
 import os
 import time
@@ -257,6 +258,16 @@ if __name__ == "__main__":
             url=url_get_all_repos,
             headers={"Authorization": f"{jwt_token}"},
         )
+
+        TARGET_REPO = user_pubilc_repos[0]["name"]
+        url_get_repo_readme = f"https://api.github.com/repos/{TARGET_USERNAME}/{TARGET_REPO}/readme"
+        repo_readme = make_request(
+            method="GET",
+            url=url_get_repo_readme,
+            headers={"Authorization": f"{jwt_token}"},
+        )
+        readme_text_string = base64.b64decode(repo_readme["content"]).decode("utf-8")
+        logger.info(f"Repo readme:{readme_text_string}")
 
     except InvalidPrivateKeyError as e:
         logger.exception("Failed to load private key: %s", str(e))
