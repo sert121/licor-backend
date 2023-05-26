@@ -192,9 +192,7 @@ def add_texts_vector_store(client_q,collection_name,local_path_pdf,host=HOST_URL
   
 
 # changes collection name as per user id
-
 def add_notion_docs(auth_token,collection_name):
-
     client_q = init_qdrant_client()
     # try:
     #     client_q.get_collection(
@@ -217,9 +215,13 @@ def add_notion_docs(auth_token,collection_name):
                         embedding_function=embeddings.embed_query,
                         collection_name=collection_name)
         
-        page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=50)
+        page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=5)
         metadata = [{'type':'notion','url':page_urls[i], 'page_id':page_ids[i]} for i in range(len(page_urls))]
-        store.add_texts(texts = page_texts, metadatas=metadata)
+        if len(page_texts)==0:
+            logger.error('no page texts found')
+        if len(page_texts) > 0:
+            logger.info(f'adding {len(page_texts)}texts to vector store')
+            store.add_texts(texts = page_texts, metadatas=metadata)
 
 
         # list_pages, page_urls = fetch_shared_subpages(object_type='page',NOTION_API_KEY=auth_token)

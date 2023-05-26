@@ -118,6 +118,7 @@ def pytion_retrieve(token, limit=30):
         page_texts: list of page texts
     """
     no = Notion(token="secret_iti3x9uc9MtpolyGcRg8Sypi3I4TpnPTZV5Dl5Oropq")
+    no = Notion(token=token)
     pages = no.search("", object_type="page")
     page_ids, page_urls, page_texts = [], [], []
     for page in pages.obj[:limit]:
@@ -133,7 +134,7 @@ def pytion_retrieve(token, limit=30):
             page_element = no.pages.get(page_id)
             blocks = page_element.get_block_children_recursive()
             page_content = blocks.obj.simple
-            
+
             page_ids.append(page_id)
             page_urls.append(page_url)
             page_texts.append(page_content)
