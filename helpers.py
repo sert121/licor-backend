@@ -215,7 +215,7 @@ def add_notion_docs(auth_token,collection_name):
                         embedding_function=embeddings.embed_query,
                         collection_name=collection_name)
         
-        page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=10)
+        page_ids, page_urls, page_texts = pytion_retrieve(token=auth_token, limit=60)
         metadata = [{'type':'notion','url':page_urls[i], 'page_id':page_ids[i]} for i in range(len(page_urls))]
         if len(page_texts)==0:
             logger.error('no page texts found')
